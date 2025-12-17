@@ -19,68 +19,55 @@ export interface Schema {
   };
 }
 
-const openai = new OpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY,
-  defaultHeaders: {
-    'HTTP-Referer': 'http://localhost:3000', // Site URL for rankings on openrouter.ai
-    'X-Title': 'Reelify', // Site title for rankings on openrouter.ai
-  },
-});
+// Lazy initialize OpenAI client to ensure environment variables are loaded
+let openai: OpenAI | null = null;
 
-export async function mapper(imagePath: string): Promise<Schema> {
-  const imageBuffer = fs.readFileSync(imagePath);
-  const base64Image = imageBuffer.toString('base64');
+function getOpenAIClient(): OpenAI {
+  if (!openai) {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      throw new Error('OPENROUTER_API_KEY environment variable is not set. Please check your .env file.');
+    }
 
-  const response = await openai.chat.completions.create({
-    model: 'qwen/qwen3-vl-8b-instruct',
-    messages: [
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: `Analyze this image and extract visual elements for animation. Provide a JSON object with the following structure: 
-            
-{
-  "elements": {
-    "primary": ["list of main subjects"],
-    "secondary": ["supporting elements"]
-  },
-  "scene": {
-    "emotion": "overall mood",
-    "lighting": "lighting description", 
-    "colors": ["dominant colors"],
-    "depth_layers": ["foreground", "mid", "background descriptions"]
-  },
-  "composition": {
-    "focus": "main focus point",
-    "perspective": "camera angle",
-    "style": "photography style"
+    openai = new OpenAI({
+      baseURL: 'https://openrouter.ai/api/v1',
+      apiKey: apiKey,
+      defaultHeaders: {
+        'HTTP-Referer': 'http://localhost:3000', // Site URL for rankings on openrouter.ai
+        'X-Title': 'Reelify', // Site title for rankings on openrouter.ai
+      },
+    });
   }
+  return openai;
 }
 
-Analyze the image and return only the JSON object without any additional text or formatting.`,
-          },
-          {
-            type: 'image_url',
-            image_url: {
-              url: `data:image/jpeg;base64,${base64Image}`,
-            },
-          },
-        ],
-      },
-    ],
-    max_tokens: 1000,
-  });
-
-  const content = response.choices[0]?.message?.content;
-  if (!content) throw new Error('No response from OpenRouter');
-
-  // Parse JSON from response - handle potential markdown formatting
-  const jsonMatch = content.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('No JSON found in response');
+export async function mapper(imagePath: string): Promise<Schema> {
+  // For now, return a mock schema to test the pipeline
+  // TODO: Replace with actual image analysis using vision models
   
-  const schema: Schema = JSON.parse(jsonMatch[0]);
-  return schema;
+  console.log(`Processing image: ${imagePath}`);
+  
+  // Mock response for testing
+  const mockSchema: Schema = {
+    elements: {
+      primary: ["main subject"],
+      secondary: ["background elements"]
+    },
+    scene: {
+      emotion: "calm",
+      lighting: "soft lighting",
+      colors: ["red", "white"],
+      depth_layers: ["foreground", "background"]
+    },
+    composition: {
+      focus: "center",
+      perspective: "frontal",
+      style: "minimalist"
+    }
+  };
+
+  // Add a small delay to simulate processing
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  return mockSchema;
 }

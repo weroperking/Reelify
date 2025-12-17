@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
@@ -28,18 +28,38 @@ export default function Home() {
     formData.append('prompt', fullPrompt);
 
     try {
-      const response = await fetch('http://localhost:3001/generate-video', {
+      // Use environment-aware API URL (always use local Next.js API route for proxy)
+      const API_BASE_URL = process.env.NODE_ENV === 'production' 
+        ? process.env.NEXT_PUBLIC_API_URL || 'https://api.reelify.com'
+        : (process.env.NEXT_PUBLIC_API_URL || '/api');
+
+      const response = await fetch(`${API_BASE_URL}/generate-video`, {
         method: 'POST',
         body: formData,
       });
+      
       if (!response.ok) {
-        throw new Error('Failed to generate video');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server error: ${response.status}`);
       }
+      
       const data = await response.json();
+      if (!data.videoUrl) {
+        throw new Error('No video URL received from server');
+      }
+      
       setVideoUrl(data.videoUrl);
     } catch (error) {
-      console.error(error);
-      setError('An error occurred while generating the video. Please try again.');
+      console.error('Video generation error:', error);
+      let errorMessage = 'An error occurred while generating the video. Please try again.';
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        errorMessage = 'Cannot connect to the server. Please ensure the backend is running on port 3001.';
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
