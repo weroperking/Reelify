@@ -26,7 +26,7 @@ Output only the complete TSX code, no explanations.
 `;
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4',
+    model: 'minimax/minimax-m2:free',
     messages: [{ role: 'user', content: prompt }],
     max_tokens: 2000,
   });
