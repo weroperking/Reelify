@@ -7,8 +7,12 @@ exports.mapper = mapper;
 const openai_1 = __importDefault(require("openai"));
 const fs_1 = __importDefault(require("fs"));
 const openai = new openai_1.default({
-    apiKey: process.env.QWEN_API_KEY,
-    baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    baseURL: 'https://openrouter.ai/api/v1',
+    apiKey: process.env.OPENROUTER_API_KEY,
+    defaultHeaders: {
+        'HTTP-Referer': 'http://localhost:3000', // Site URL for rankings on openrouter.ai
+        'X-Title': 'Reelify', // Site title for rankings on openrouter.ai
+    },
 });
 async function mapper(imagePath) {
     const imageBuffer = fs_1.default.readFileSync(imagePath);
@@ -56,7 +60,7 @@ Analyze the image and return only the JSON object without any additional text or
     });
     const content = response.choices[0]?.message?.content;
     if (!content)
-        throw new Error('No response from Qwen');
+        throw new Error('No response from OpenRouter');
     // Parse JSON from response - handle potential markdown formatting
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch)

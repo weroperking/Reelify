@@ -20,8 +20,12 @@ export interface Schema {
 }
 
 const openai = new OpenAI({
-  apiKey: process.env.QWEN_API_KEY,
-  baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY,
+  defaultHeaders: {
+    'HTTP-Referer': 'http://localhost:3000', // Site URL for rankings on openrouter.ai
+    'X-Title': 'Reelify', // Site title for rankings on openrouter.ai
+  },
 });
 
 export async function mapper(imagePath: string): Promise<Schema> {
@@ -71,7 +75,7 @@ Analyze the image and return only the JSON object without any additional text or
   });
 
   const content = response.choices[0]?.message?.content;
-  if (!content) throw new Error('No response from Qwen');
+  if (!content) throw new Error('No response from OpenRouter');
 
   // Parse JSON from response - handle potential markdown formatting
   const jsonMatch = content.match(/\{[\s\S]*\}/);

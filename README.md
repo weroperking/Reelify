@@ -9,9 +9,9 @@ User Input → [Mapper] → [Schema] → [Director] → [Motion-IR] → [Coder] 
 ## Architecture
 
 ### Backend Pipeline
-- **Mapper**: Uses `qwen/qwen3-vl-8b-instruct` for image analysis
+- **Mapper**: Uses `qwen/qwen3-vl-8b-instruct` via unified OpenRouter API for image analysis
 - **Director**: Transforms visual analysis into animation instructions
-- **Coder**: Uses `minimax/minimax-m2:free` for Remotion code generation
+- **Coder**: Uses `minimax/minimax-m2:free` via unified OpenRouter API for Remotion code generation
 - **Renderer**: Handles video rendering and serving
 
 ### Frontend
@@ -23,9 +23,7 @@ User Input → [Mapper] → [Schema] → [Director] → [Motion-IR] → [Coder] 
 
 ### Prerequisites
 - Node.js 18+ and npm/pnpm
-- API keys for:
-  - Qwen (for image analysis): `QWEN_API_KEY`
-  - OpenRouter (for code generation): `OPENROUTER_API_KEY`
+- OpenRouter API key for both image analysis and code generation: `OPENROUTER_API_KEY`
 
 ### Backend Setup
 
@@ -44,7 +42,6 @@ User Input → [Mapper] → [Schema] → [Director] → [Motion-IR] → [Coder] 
    ```env
    PORT=3001
    OPENROUTER_API_KEY=your_openrouter_api_key_here
-   QWEN_API_KEY=your_qwen_api_key_here
    TEMP_DIR=./temp
    OUTPUT_DIR=./output
    ```
@@ -133,7 +130,7 @@ frontend/
 
 ## Technologies Used
 
-- **Backend**: Express.js, TypeScript, OpenAI API, Qwen API
+- **Backend**: Express.js, TypeScript, Unified OpenRouter API (Qwen + Minimax models)
 - **Frontend**: Next.js, React, TailwindCSS
 - **Video Rendering**: Remotion
 - **3D Graphics**: React-Three-Fiber, Three.js

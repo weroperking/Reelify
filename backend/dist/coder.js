@@ -6,8 +6,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.coder = coder;
 const openai_1 = __importDefault(require("openai"));
 const openai = new openai_1.default({
-    apiKey: process.env.OPENROUTER_API_KEY,
     baseURL: 'https://openrouter.ai/api/v1',
+    apiKey: process.env.OPENROUTER_API_KEY,
+    defaultHeaders: {
+        'HTTP-Referer': 'http://localhost:3000', // Site URL for rankings on openrouter.ai
+        'X-Title': 'Reelify', // Site title for rankings on openrouter.ai
+    },
 });
 async function coder(motionIR) {
     const prompt = `
