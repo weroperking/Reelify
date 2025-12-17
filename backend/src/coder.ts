@@ -2,7 +2,8 @@ import OpenAI from 'openai';
 import { MotionIR } from './director';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: 'https://openrouter.ai/api/v1',
 });
 
 export async function coder(motionIR: MotionIR): Promise<string> {

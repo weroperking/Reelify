@@ -11,6 +11,12 @@
   "dependencies": {
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.2",
+    "@remotion/bundler": "^4.0.392",
+    "@remotion/cli": "^4.0.392",
+    "@remotion/paths": "^4.0.392",
+    "@remotion/player": "^4.0.392",
+    "@remotion/renderer": "^4.0.392",
+    "@remotion/three": "^4.0.392",
     "@types/three": "^0.182.0",
     "next": "16.0.10",
     "react": "19.2.1",
