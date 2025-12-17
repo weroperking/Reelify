@@ -36,13 +36,13 @@ app.post('/generate-video', upload.single('image'), async (req, res) => {
         if (!imagePath || !prompt) {
             return res.status(400).json({ error: 'Image and prompt are required' });
         }
-        const videoPath = await (0, pipeline_1.generateVideo)(imagePath, prompt);
-        // Convert file path to environment-aware URL
-        const host = process.env.BACKEND_HOST || 'localhost';
-        const protocol = process.env.FRONTEND_URL ? 'https' : 'http';
-        const frontendHost = process.env.FRONTEND_URL || `${host}:3000`;
-        const videoUrl = `${protocol}://${frontendHost}/api/videos/${path_1.default.basename(videoPath)}`;
-        res.json({ videoUrl });
+        const result = await (0, pipeline_1.generateVideo)(imagePath, prompt);
+        // The new pipeline returns a PipelineResult with videoUrl already generated
+        res.json({
+            videoUrl: result.videoUrl,
+            metadata: result.metadata,
+            processingTime: result.processingTime
+        });
     }
     catch (error) {
         console.error('Video generation error:', error);

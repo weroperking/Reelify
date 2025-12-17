@@ -4,7 +4,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
-import { generateVideo } from './pipeline';
+import { generateVideo, PipelineResult } from './pipeline';
 
 // Load environment variables
 dotenv.config();
@@ -40,14 +40,14 @@ app.post('/generate-video', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: 'Image and prompt are required' });
     }
 
-    const videoPath = await generateVideo(imagePath, prompt);
-    // Convert file path to environment-aware URL
-    const host = process.env.BACKEND_HOST || 'localhost';
-    const protocol = process.env.FRONTEND_URL ? 'https' : 'http';
-    const frontendHost = process.env.FRONTEND_URL || `${host}:3000`;
-    const videoUrl = `${protocol}://${frontendHost}/api/videos/${path.basename(videoPath)}`;
+    const result = await generateVideo(imagePath, prompt);
     
-    res.json({ videoUrl });
+    // The new pipeline returns a PipelineResult with videoUrl already generated
+    res.json({ 
+      videoUrl: result.videoUrl,
+      metadata: result.metadata,
+      processingTime: result.processingTime
+    });
   } catch (error) {
     console.error('Video generation error:', error);
     // Return more specific error information

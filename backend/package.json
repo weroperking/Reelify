@@ -14,8 +14,12 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.2",
+    "@remotion/bundler": "^4.0.393",
+    "@remotion/cli": "^4.0.393",
+    "@remotion/renderer": "^4.0.393",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/multer": "^2.0.0",
