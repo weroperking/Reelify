@@ -29,6 +29,7 @@ export interface Schema {
 
 // Lazy initialize OpenAI client to ensure environment variables are loaded
 let openai: OpenAI | null = null;
+let visionModel: string = 'qwen/qwen3-vl-8b-instruct'; // Default model
 
 function getOpenAIClient(): OpenAI {
   if (!openai) {
@@ -36,6 +37,10 @@ function getOpenAIClient(): OpenAI {
     if (!apiKey) {
       throw new Error('OPENROUTER_API_KEY environment variable is not set. Please check your .env file.');
     }
+
+    // Get the vision model from environment or use default
+    visionModel = process.env.MAPPER_MODEL || visionModel;
+    console.log(`Using vision model: ${visionModel}`);
 
     openai = new OpenAI({
       baseURL: 'https://openrouter.ai/api/v1',
@@ -128,7 +133,7 @@ Return your analysis as a structured JSON object with these categories as keys.
 `;
 
   const response = await client.chat.completions.create({
-    model: 'openai/gpt-4-vision-preview',
+    model: visionModel,
     messages: [
       {
         role: 'user',

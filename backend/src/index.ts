@@ -47,11 +47,18 @@ app.use(express.json());
 
 // Serve static files from output directory
 const outputDir = path.join(__dirname, '../output');
+const tempDir = path.join(__dirname, '../temp');
 logger.info(`📁 Output directory: ${outputDir}`);
+logger.info(`📁 Temp directory: ${tempDir}`);
 
 if (!fs.existsSync(outputDir)) {
   logger.info('📂 Creating output directory');
   fs.mkdirSync(outputDir, { recursive: true });
+}
+
+if (!fs.existsSync(tempDir)) {
+  logger.info('📂 Creating temp directory');
+  fs.mkdirSync(tempDir, { recursive: true });
 }
 
 // Verify output directory permissions
@@ -62,11 +69,34 @@ try {
   logger.error('❌ Output directory permissions error', error);
 }
 
+// Verify temp directory permissions
+try {
+  fs.accessSync(tempDir, fs.constants.R_OK | fs.constants.W_OK);
+  logger.info('✅ Temp directory is readable and writable');
+} catch (error) {
+  logger.error('❌ Temp directory permissions error', error);
+}
+
 app.use('/api/videos', express.static(outputDir, {
   setHeaders: (res, path) => {
     logger.debug(`🎥 Serving video file: ${path}`);
     res.set('Cache-Control', 'public, max-age=31536000');
     res.set('Content-Type', 'video/mp4');
+  }
+}));
+
+app.use('/temp', express.static(tempDir, {
+  setHeaders: (res, path) => {
+    logger.debug(`🖼️ Serving temp file: ${path}`);
+    res.set('Cache-Control', 'public, max-age=3600'); // 1 hour cache for temp files
+    // Set content type based on file extension
+    if (path.endsWith('.png')) {
+      res.set('Content-Type', 'image/png');
+    } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+      res.set('Content-Type', 'image/jpeg');
+    } else if (path.endsWith('.gif')) {
+      res.set('Content-Type', 'image/gif');
+    }
   }
 }));
 

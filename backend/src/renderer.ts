@@ -320,8 +320,17 @@ async function createTemporaryCompositionFile(
   
   const compositionFilePath = path.join(tempDir, `temp-composition-${Date.now()}-${renderId || 'unknown'}.tsx`);
   
+  // Copy image to temp directory if provided
+  let tempImagePath: string | undefined;
+  if (imagePath && fs.existsSync(imagePath)) {
+    const imageExtension = path.extname(imagePath);
+    tempImagePath = path.join(tempDir, `temp-image-${Date.now()}-${renderId || 'unknown'}${imageExtension}`);
+    fs.copyFileSync(imagePath, tempImagePath);
+    logger.info(`📁 [${renderId}] Image copied to temp directory:`, tempImagePath);
+  }
+  
   // Generate TypeScript composition file with enhanced error handling
-  const compositionCode = generateCompositionFile(composition, imagePath);
+  const compositionCode = generateCompositionFile(composition, tempImagePath);
   
   try {
     fs.writeFileSync(compositionFilePath, compositionCode);
@@ -336,10 +345,13 @@ async function createTemporaryCompositionFile(
 // Generate the actual TypeScript/TSX composition file with fixes for black screen
 function generateCompositionFile(
   composition: RemotionComposition,
-  imagePath?: string
+  tempImagePath?: string
 ): string {
   const compositionId = composition.compositionId.replace(/-/g, '_');
   const duration = composition.metadata.duration * composition.metadata.fps;
+  
+  // Get just the filename for the image reference
+  const imageFilename = tempImagePath ? path.basename(tempImagePath) : null;
   
   logger.debug('🎨 Generating composition file with parameters:', {
     compositionId,
@@ -347,14 +359,15 @@ function generateCompositionFile(
     width: composition.metadata.width,
     height: composition.metadata.height,
     fps: composition.metadata.fps,
-    imagePath
+    tempImagePath,
+    imageFilename
   });
   
   return `import React from 'react';
 import { Composition, interpolate, spring, useCurrentFrame, Img, registerRoot } from 'remotion';
 
 // Dynamic composition component generated from Motion-IR
-export const ${compositionId}: React.FC<{ imageSrc?: string }> = ({ imageSrc }) => {
+export const ${compositionId}: React.FC = () => {
   const frame = useCurrentFrame();
   const duration = ${duration}; // frames
   
@@ -394,9 +407,9 @@ export const ${compositionId}: React.FC<{ imageSrc?: string }> = ({ imageSrc }) 
         justifyContent: 'center',
       }}
     >
-      {imageSrc && (
+      ${imageFilename ? `
         <Img
-          src={imageSrc}
+          src={\`http://localhost:3001/temp/${imageFilename}\`}
           style={{
             width: '100%',
             height: '100%',
@@ -407,16 +420,14 @@ export const ${compositionId}: React.FC<{ imageSrc?: string }> = ({ imageSrc }) 
           }}
           // Add error handling for image loading
           onError={(e) => {
-            console.error('Failed to load image:', imageSrc);
+            console.error('Failed to load image:', '${imageFilename}');
             e.currentTarget.style.display = 'none';
           }}
           onLoad={() => {
-            console.log('Image loaded successfully:', imageSrc);
+            console.log('Image loaded successfully:', '${imageFilename}');
           }}
         />
-      )}
-      {/* Fallback content if no image */}
-      {!imageSrc && (
+      ` : `
         <div
           style={{
             width: '100%',
@@ -431,7 +442,7 @@ export const ${compositionId}: React.FC<{ imageSrc?: string }> = ({ imageSrc }) 
         >
           No Image Available
         </div>
-      )}
+      `}
     </div>
   );
 };
@@ -457,13 +468,13 @@ registerRoot(RemotionVideo);
 
 export async function getVideoUrl(videoPath: string): Promise<string> {
   try {
-    // Convert absolute path to relative URL for serving
-    const relativePath = path.relative(path.join(__dirname, '../'), videoPath);
-    const urlPath = `/api/videos/${relativePath}`;
+    // Extract just the filename from the path
+    const filename = path.basename(videoPath);
+    const urlPath = `/api/videos/${filename}`;
     
     logger.debug('🔗 Generated video URL:', { 
       videoPath, 
-      relativePath, 
+      filename, 
       finalUrl: urlPath 
     });
     
@@ -567,10 +578,21 @@ async function createSimpleComposition(
   
   const compositionFilePath = path.join(tempDir, `simple-composition-${Date.now()}-${renderId || 'unknown'}.tsx`);
   
+  // Copy image to temp directory if provided
+  let tempImagePath: string | undefined;
+  if (imagePath && fs.existsSync(imagePath)) {
+    const imageExtension = path.extname(imagePath);
+    tempImagePath = path.join(tempDir, `simple-image-${Date.now()}-${renderId || 'unknown'}${imageExtension}`);
+    fs.copyFileSync(imagePath, tempImagePath);
+    logger.info(`📁 [${renderId}] Simple composition image copied:`, tempImagePath);
+  }
+  
+  const imageFilename = tempImagePath ? path.basename(tempImagePath) : null;
+  
   const compositionCode = `import React from 'react';
 import { Composition, interpolate, useCurrentFrame, Img, registerRoot } from 'remotion';
 
-export const SimpleVideo: React.FC<{ imageSrc?: string }> = ({ imageSrc }) => {
+export const SimpleVideo: React.FC = () => {
   const frame = useCurrentFrame();
   const opacity = interpolate(frame, [0, 30], [0, 1]);
   
@@ -578,14 +600,14 @@ export const SimpleVideo: React.FC<{ imageSrc?: string }> = ({ imageSrc }) => {
   
   return (
     <div style={{ width: '100%', height: '100%', backgroundColor: '#000', opacity }}>
-      {imageSrc ? (
+      ${imageFilename ? `
         <Img 
-          src={imageSrc} 
+          src={\`http://localhost:3001/temp/${imageFilename}\`}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          onError={(e) => console.error('Image load error:', imageSrc)}
-          onLoad={() => console.log('Image loaded:', imageSrc)}
+          onError={(e: any) => console.error('Image load error:', '${imageFilename}')}
+          onLoad={() => console.log('Image loaded:', '${imageFilename}')}
         />
-      ) : (
+      ` : `
         <div style={{ 
           width: '100%', 
           height: '100%', 
@@ -597,7 +619,7 @@ export const SimpleVideo: React.FC<{ imageSrc?: string }> = ({ imageSrc }) => {
         }}>
           No Image
         </div>
-      )}
+      `}
     </div>
   );
 };

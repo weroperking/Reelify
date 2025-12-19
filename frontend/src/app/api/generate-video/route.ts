@@ -118,26 +118,12 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Test video URL accessibility
-    const videoUrl = data.videoUrl;
-    try {
-      const videoTestResponse = await fetch(videoUrl, { method: 'HEAD' });
-      logger.info(`🧪 [${requestId}] Video URL accessibility test:`, {
-        url: videoUrl,
-        status: videoTestResponse.status,
-        ok: videoTestResponse.ok,
-        contentType: videoTestResponse.headers.get('content-type')
-      });
-      
-      if (!videoTestResponse.ok) {
-        logger.warn(`⚠️ [${requestId}] Video URL may not be accessible:`, {
-          status: videoTestResponse.status,
-          url: videoUrl
-        });
-      }
-    } catch (testError) {
-      logger.warn(`⚠️ [${requestId}] Video URL accessibility test failed:`, testError);
-    }
+    // No need to test video accessibility - it will be served by the same application
+    logger.info(`✅ [${requestId}] Video URL ready for serving:`, {
+      videoUrl: data.videoUrl,
+      metadata: data.metadata,
+      processingTime: data.processingTime
+    });
     
     return NextResponse.json(data);
     
