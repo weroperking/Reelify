@@ -64,6 +64,16 @@ export function director(schema: Schema, prompt: string, imagePath?: string): Mo
   const globalEffects = createGlobalEffects(creativeDirection, duration);
   timeline.globalEffects = globalEffects;
   
+  // Add cursor animation effect
+  const cursorEffect = createCursorEffect(duration);
+  if (cursorEffect) {
+    timeline.globalEffects.push(cursorEffect);
+  }
+  
+  // Add zoom and pan effects based on movement
+  const movementEffects = createMovementEffects(creativeDirection, duration);
+  timeline.globalEffects.push(...movementEffects);
+  
   // Set background color based on schema
   if (schema.scene.colors.length > 0) {
     timeline.metadata.backgroundColor = schema.scene.colors[0];
@@ -348,6 +358,63 @@ function createGlobalEffects(direction: CreativeDirection, duration: number): Ef
       },
       startTime: 0,
       duration
+    });
+  }
+  
+  return effects;
+}
+
+function createCursorEffect(duration: number): Effect | null {
+  // Return a cursor animation effect if micro-animation is in effect
+  if (Math.random() < 0.5) {
+    return {
+      id: 'cursor-animation',
+      type: 'animation',
+      parameters: {
+        name: 'bezier',
+        curve: '0,0,0.5,0.2,0.6,1,1,1',
+        duration: 1,
+        iterationCount: 'infinite'
+      },
+      startTime: 0,
+      duration: duration - 2
+    };
+  }
+  
+  return null;
+}
+
+function createMovementEffects(direction: CreativeDirection, duration: number): Effect[] {
+  const effects: Effect[] = [];
+  
+  if (direction.movement === 'zoom') {
+    // Add zoom effect
+    effects.push({
+      id: 'zoom-effect',
+      type: 'zoom',
+      parameters: {
+        type: 'to',
+        zoom: 1.2,
+        fov: 80,
+        duration: 1.5,
+        easing: 'easeInOut'
+      },
+      startTime: duration / 2 + 1,
+      duration: 1.5
+    });
+  } else if (direction.movement === 'pan') {
+    // Add pan effect
+    effects.push({
+      id: 'pan-effect',
+      type: 'pan',
+      parameters: {
+        from: '0,0',
+        to: '100,0',
+        duration: 2,
+        easing: 'easeInOut'
+      },
+      startTime: duration / 2,
+      duration: 2
     });
   }
   

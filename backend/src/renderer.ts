@@ -367,30 +367,55 @@ function generateCompositionFile(
 import { Composition, interpolate, spring, useCurrentFrame, Img, registerRoot } from 'remotion';
 
 // Dynamic composition component generated from Motion-IR
-export const ${compositionId}: React.FC = () => {
+export const ${compositionId}: React.FC<{ imageSrc?: string }> = ({ imageSrc }) => {
   const frame = useCurrentFrame();
   const duration = ${duration}; // frames
+  const fps = ${composition.metadata.fps};
   
   // Enhanced fade in animation with longer duration for visibility
   const opacity = interpolate(
     frame,
-    [0, 60], // Increased from 30 to 60 frames (2 seconds at 30fps)
+    [0, Math.min(60, duration * 0.1)], 
     [0, 1],
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
   );
   
-  // Smooth scale animation
+  // Smooth scale animation using spring for more natural feel
   const scale = spring({
     frame,
-    fps: ${composition.metadata.fps},
+    fps: fps,
     config: {
       damping: 15,
       stiffness: 100,
     },
   });
   
+  // Add pan animation (left to right)
+  const translateX = interpolate(
+    frame,
+    [0, duration * 0.8],
+    [0, 100],
+    { extrapolateRight: 'clamp' }
+  );
+  
+  // Add subtle zoom in effect
+  const zoomScale = interpolate(
+    frame,
+    [0, duration * 0.7],
+    [1, 1.1],
+    { extrapolateRight: 'clamp' }
+  );
+  
+  // Cursor animation from bottom to top
+  const cursorY = interpolate(
+    frame,
+    [0, duration],
+    [${composition.metadata.height + 50}, -50],
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+  );
+  
   // Log current frame for debugging (only in development)
-  ${process.env.NODE_ENV !== 'production' ? `console.log('Frame:', frame, 'Opacity:', opacity, 'Scale:', scale);` : ''}
+  ${process.env.NODE_ENV !== 'production' ? `console.log('Frame:', frame, 'Opacity:', opacity, 'Scale:', scale, 'TranslateX:', translateX);` : ''}
   
   return (
     <div
@@ -401,7 +426,7 @@ export const ${compositionId}: React.FC = () => {
         position: 'relative',
         overflow: 'hidden',
         opacity,
-        transform: \`scale(\${scale})\`,
+        transform: \`scale(\${scale * zoomScale}) translateX(\${translateX}px)\`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -427,6 +452,31 @@ export const ${compositionId}: React.FC = () => {
             console.log('Image loaded successfully:', '${imageFilename}');
           }}
         />
+        
+        {/* Animated cursor effect */}
+        <div
+          style={{
+            position: 'absolute',
+            left: '50%',
+            top: cursorY,
+            width: '20px',
+            height: '20px',
+            backgroundColor: '#00ff88',
+            borderRadius: '50%',
+            transform: 'translate(-50%, -50%)',
+            boxShadow: '0 0 20px rgba(0, 255, 136, 0.6)',
+            animation: \`pulse 1.5s ease-in-out infinite alternate\`,
+          }}
+        />
+        
+        <style>
+          {\`
+            @keyframes pulse {
+              0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+              100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            }
+          \`}
+        </style>
       ` : `
         <div
           style={{
@@ -592,20 +642,59 @@ async function createSimpleComposition(
   const compositionCode = `import React from 'react';
 import { Composition, interpolate, useCurrentFrame, Img, registerRoot } from 'remotion';
 
-export const SimpleVideo: React.FC = () => {
+export const SimpleVideo: React.FC<{ imageSrc?: string }> = ({ imageSrc }) => {
   const frame = useCurrentFrame();
+  const duration = 150; // 5 seconds at 30fps
+  
+  // Basic fade in animation
   const opacity = interpolate(frame, [0, 30], [0, 1]);
   
-  console.log('Simple composition frame:', frame, 'opacity:', opacity);
+  // Subtle scale animation
+  const scale = interpolate(frame, [0, duration * 0.7], [0.95, 1.05], { extrapolateRight: 'clamp' });
+  
+  // Horizontal pan
+  const translateX = interpolate(frame, [0, duration * 0.8], [0, 50]);
+  
+  console.log('Simple composition frame:', frame, 'opacity:', opacity, 'scale:', scale);
   
   return (
-    <div style={{ width: '100%', height: '100%', backgroundColor: '#000', opacity }}>
+    <div style={{ 
+      width: '100%', 
+      height: '100%', 
+      backgroundColor: '#000', 
+      opacity,
+      transform: \`scale(\${scale}) translateX(\${translateX}px)\`,
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
       ${imageFilename ? `
         <Img 
           src={\`http://localhost:3001/temp/${imageFilename}\`}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            objectFit: 'cover',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+          }}
           onError={(e: any) => console.error('Image load error:', '${imageFilename}')}
           onLoad={() => console.log('Image loaded:', '${imageFilename}')}
+        />
+        
+        {/* Simple cursor animation */}
+        <div
+          style={{
+            position: 'absolute',
+            left: '50%',
+            top: \`\${(frame / duration) * 100}%\`,
+            width: '15px',
+            height: '15px',
+            backgroundColor: '#ff6b6b',
+            borderRadius: '50%',
+            transform: 'translate(-50%, -50%)',
+            boxShadow: '0 0 15px rgba(255, 107, 107, 0.5)',
+          }}
         />
       ` : `
         <div style={{ 
@@ -615,7 +704,8 @@ export const SimpleVideo: React.FC = () => {
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          color: 'white'
+          color: 'white',
+          fontSize: '24px'
         }}>
           No Image
         </div>

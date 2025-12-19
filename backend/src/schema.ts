@@ -23,8 +23,8 @@ export interface Keyframe {
 
 export interface Effect {
   id: string;
-  type: 'zoom' | 'pan' | 'opacity' | 'slide' | 'fade' | 'blur' | 'colorGrade' | 'filmGrain';
-  parameters: Record<string, number | string | boolean>;
+  type: 'zoom' | 'pan' | 'opacity' | 'slide' | 'fade' | 'blur' | 'colorGrade' | 'filmGrain' | 'cursor' | 'animation';
+  parameters: Record<string, number | string | boolean | number[]>;
   startTime: number;
   duration: number;
 }

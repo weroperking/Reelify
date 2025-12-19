@@ -30,9 +30,14 @@
     "multer": "^2.0.2",
     "nodemon": "^3.1.11",
     "openai": "^6.14.0",
-    "remotion": "^4.0.392",
+    "react": "^19.2.3",
+    "remotion": "^4.0.393",
     "three": "^0.182.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3"
   }
 }

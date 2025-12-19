@@ -1,6 +1,7 @@
 import React from 'react';
 import { Timeline, Layer, Keyframe, Effect, Camera } from './schema';
 import { MotionIR } from './director';
+import { useCurrentFrame, interpolate } from 'remotion';
 
 export interface RemotionComposition {
   component: React.ComponentType<any>;
@@ -18,6 +19,7 @@ interface AnimationConfig {
   keyframes: Array<{ time: number; value: any; easing?: string }>;
 }
 
+// Main coder function that creates a Remotion composition from Motion-IR
 export async function coder(motionIR: MotionIR): Promise<RemotionComposition> {
   const { timeline } = motionIR;
   
@@ -35,6 +37,14 @@ export async function coder(motionIR: MotionIR): Promise<RemotionComposition> {
     }
   };
 }
+
+// CommonJS export for backwards compatibility
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { coder };
+}
+
+// Also export as default for ES6 modules
+export default coder;
 
 function createCompositionComponent(timeline: Timeline): React.ComponentType<any> {
   return function DynamicComposition(props: { imageSrc?: string }) {
@@ -88,8 +98,8 @@ function LayerComponent({
   imageUrl: string; 
   timeline: Timeline; 
 }) {
-  // Calculate animation progress based on current time
-  const currentTime = 0; // This would be managed by Remotion's useCurrentFrame()
+  const frame = useCurrentFrame();
+  const currentTime = frame / timeline.metadata.fps; // Convert frame to seconds
   
   const animatedStyle = calculateAnimatedStyle(layer, currentTime);
   
@@ -145,10 +155,11 @@ function EffectComponent({
   effect: Effect; 
   timeline: Timeline; 
 }) {
-  const currentTime = 0; // This would be managed by Remotion's useCurrentFrame()
+  const frame = useCurrentFrame();
+  const currentTime = frame / timeline.metadata.fps; // Convert frame to seconds
   
   // Only render effect if it's active at current time
-  if (currentTime < effect.startTime || currentTime > effect.startTime + effect.duration) {
+  if (frame < effect.startTime || frame > effect.startTime + effect.duration) {
     return null;
   }
   
